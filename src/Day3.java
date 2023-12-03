@@ -1,10 +1,7 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,51 +12,158 @@ public class Day3 {
         System.out.println(solveSecond(lines));
     }
 
+    private static List<String> toStringList(String s) {
+        return new ArrayList<String>(Arrays.asList(s.split("")));
+    }
+
     private static int solveFirst(List<String> lines) {
-
-        for (String line : lines) {
-            List<String> numbers = new ArrayList<>();
-            Matcher m = Pattern.compile("\\d+")
-                    .matcher(line);
-            while (m.find()) {
-                numbers.add(m.group());
-            }
-
-            Map<String, List<Coordinate>> positions = new HashMap<>();
-
-            for (String number : numbers) {
-                positions.put(number, );
-                line.indexOf()
-            }
-
-
-            int n = 0;
-        }
-
-
-        char[][] arr = new char[10][];
+        List<Number> numbers = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
-            char[] chars = lines.get(i).toCharArray();
-            arr[i] = chars;
+            List<String> split = toStringList(lines.get(i));
+            String nextNumberToAdd = "";
+            List<Coordinate> coordinatesToAdd = new ArrayList<>();
+            boolean previousWasNumber = false;
+
+            for (int j = 0; j < split.size(); j++) {
+                String s = split.get(j);
+                if (s.matches("\\d")) {
+                    nextNumberToAdd += s;
+                    coordinatesToAdd.add(new Coordinate(j, i));
+                    previousWasNumber = true;
+                    continue;
+                }
+                if (previousWasNumber) {
+                    numbers.add(new Number(Integer.parseInt(nextNumberToAdd), coordinatesToAdd));
+                    previousWasNumber = false;
+                    nextNumberToAdd = "";
+                    coordinatesToAdd = new ArrayList<>();
+                }
+            }
+            if (previousWasNumber) {
+                numbers.add(new Number(Integer.parseInt(nextNumberToAdd), coordinatesToAdd));
+            }
         }
 
-        int currentIndex = 0;
+        List<Coordinate> symbols = new ArrayList<>();
 
-        for (int i = 0; i < arr.length; i++) {
-            for (int j = 0; j < arr[i].length; j++) {
-                if (arr[i][j] > 47 && arr[i][j] < 58) {
+        for (int i = 0; i < lines.size(); i++) {
+            List<String> split = toStringList(lines.get(i));
 
+            for (int j = 0; j < split.size(); j++) {
+                String s = split.get(j);
+
+                if (!s.matches("\\d") && !s.equals(".")) {
+                    symbols.add(new Coordinate(j, i));
                 }
             }
         }
 
-        return 0;
+        int sum = 0;
+
+        for (Number number : numbers) {
+            boolean alreadyCounted = false;
+            for (Coordinate coordinate : number.getCoordinates()) {
+                for (Coordinate symbol : symbols) {
+                    if (coordinate.isAdjacent(symbol) && !alreadyCounted) {
+                        sum += number.getNumber();
+                        alreadyCounted = true;
+                    }
+                }
+            }
+        }
+
+        return sum;
     }
 
     private static int solveSecond(List<String> lines) {
-        return 0;
+        List<Number> numbers = new ArrayList<>();
+
+        for (int i = 0; i < lines.size(); i++) {
+            List<String> split = toStringList(lines.get(i));
+            String nextNumberToAdd = "";
+            List<Coordinate> coordinatesToAdd = new ArrayList<>();
+            boolean previousWasNumber = false;
+
+            for (int j = 0; j < split.size(); j++) {
+                String s = split.get(j);
+                if (s.matches("\\d")) {
+                    nextNumberToAdd += s;
+                    coordinatesToAdd.add(new Coordinate(j, i));
+                    previousWasNumber = true;
+                    continue;
+                }
+                if (previousWasNumber) {
+                    numbers.add(new Number(Integer.parseInt(nextNumberToAdd), coordinatesToAdd));
+                    previousWasNumber = false;
+                    nextNumberToAdd = "";
+                    coordinatesToAdd = new ArrayList<>();
+                }
+            }
+            if (previousWasNumber) {
+                numbers.add(new Number(Integer.parseInt(nextNumberToAdd), coordinatesToAdd));
+            }
+        }
+
+        List<Coordinate> stars = new ArrayList<>();
+
+        for (int i = 0; i < lines.size(); i++) {
+            List<String> split = toStringList(lines.get(i));
+
+            for (int j = 0; j < split.size(); j++) {
+                String s = split.get(j);
+
+                if (s.equals("*")) {
+                    stars.add(new Coordinate(j, i));
+                }
+            }
+        }
+
+        int sum = 0;
+
+
+        for (Coordinate star : stars) {
+            int matches = 0;
+            int product = 0;
+            for (Number number : numbers) {
+                for (Coordinate coordinate : number.getCoordinates()) {
+                    if (star.isAdjacent(coordinate)) {
+                        if (matches == 0) {
+                            product = number.getNumber();
+                        }
+                        if (matches == 1) {
+                            product = product * number.getNumber();
+                        }
+                        matches++;
+                        break;
+                    }
+                }
+            }
+            if (matches == 2) {
+                sum += product;
+            }
+        }
+
+        return sum;
     }
 
+    private static class Number {
+        private int number;
+
+        private List<Coordinate> coordinates;
+
+        public Number(int number, List<Coordinate> coordinates) {
+            this.number = number;
+            this.coordinates = coordinates;
+        }
+
+        public int getNumber() {
+            return number;
+        }
+
+        public List<Coordinate> getCoordinates() {
+            return coordinates;
+        }
+    }
     private static class Coordinate {
         private int x;
         private int y;
@@ -75,6 +179,11 @@ public class Day3 {
 
         public int getY() {
             return y;
+        }
+
+        public boolean isAdjacent(Coordinate other) {
+            return Math.abs(this.getX() - other.getX()) <= 1 &&
+                    Math.abs(this.getY() - other.getY()) <= 1;
         }
     }
 }
